@@ -1,4 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
+import re
 from pathlib import Path
 
 
@@ -35,6 +36,20 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
+# Qt 6 on Windows uses the OS-provided ICU runtime. PyInstaller resolves native
+# dependencies through PATH; a foreign toolchain (for example Poppler) can put
+# an incompatible unversioned ICU DLL in the application root, where it shadows
+# System32 and makes PySide6.QtCore fail with WinError 127.
+system_icu_pattern = re.compile(r"icu(?:uc|in|dt)\d*\.dll", re.IGNORECASE)
+a.binaries = [
+    entry
+    for entry in a.binaries
+    if not (
+        Path(entry[0]).parent == Path(".")
+        and system_icu_pattern.fullmatch(Path(entry[0]).name)
+    )
+]
 pyz = PYZ(a.pure)
 
 exe = EXE(

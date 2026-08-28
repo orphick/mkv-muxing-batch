@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "2.7.1",
+    [string]$Version = "2.7.2",
     [string]$Python = ".\.venv\Scripts\python.exe"
 )
 
@@ -14,6 +14,7 @@ $applicationDirectory = Join-Path $distDirectory "MKV Muxing Batch GUI"
 $portableFile = Join-Path $releaseDirectory "MKV.Muxing.Batch.GUI.x64.v$Version.Qt6.Windows.Portable.zip"
 $installerFile = Join-Path $releaseDirectory "MKV.Muxing.Batch.GUI.x64.v$Version.Qt6.Windows.Installer.exe"
 $checksumsFile = Join-Path $releaseDirectory "SHA256SUMS.txt"
+$runtimeVerifier = Join-Path $PSScriptRoot "verify_packaged_runtime.py"
 $sourceVersion = [regex]::Match(
     (Get-Content -LiteralPath (Join-Path $projectRoot "packages\Startup\Version.py") -Raw),
     'Version\s*=\s*"([^"]+)"'
@@ -35,9 +36,86 @@ New-Item -ItemType Directory -Path $releaseDirectory | Out-Null
 
 Push-Location $projectRoot
 try {
-    & $Python -m PyInstaller --noconfirm --clean --workpath $buildDirectory --distpath $distDirectory $specFile
+    $pythonExecutable = (Resolve-Path -LiteralPath $Python).Path
+    $basePythonDirectory = & $pythonExecutable -c "import sys; print(sys.base_prefix)"
     if ($LASTEXITCODE -ne 0) {
-        throw "PyInstaller failed with exit code $LASTEXITCODE"
+        throw "Could not inspect the release Python interpreter"
+    }
+
+    # Native dependency discovery must not inherit DLL directories from Codex,
+    # Poppler, media tools, or other software installed on the build machine.
+    $originalPath = $env:PATH
+    $originalPythonPath = $env:PYTHONPATH
+    $originalQtPluginPath = $env:QT_PLUGIN_PATH
+    $cleanPathEntries = @(
+        (Split-Path -Parent $pythonExecutable),
+        $basePythonDirectory,
+        (Join-Path $basePythonDirectory "Scripts"),
+        (Join-Path $env:SystemRoot "System32"),
+        $env:SystemRoot
+    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique
+    try {
+        $env:PATH = $cleanPathEntries -join [System.IO.Path]::PathSeparator
+        Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+        Remove-Item Env:QT_PLUGIN_PATH -ErrorAction SilentlyContinue
+        & $pythonExecutable -m PyInstaller --noconfirm --clean --workpath $buildDirectory --distpath $distDirectory $specFile
+        if ($LASTEXITCODE -ne 0) {
+            throw "PyInstaller failed with exit code $LASTEXITCODE"
+        }
+    }
+    finally {
+        $env:PATH = $originalPath
+        if ($null -eq $originalPythonPath) {
+            Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:PYTHONPATH = $originalPythonPath
+        }
+        if ($null -eq $originalQtPluginPath) {
+            Remove-Item Env:QT_PLUGIN_PATH -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:QT_PLUGIN_PATH = $originalQtPluginPath
+        }
+    }
+
+    & $pythonExecutable $runtimeVerifier $applicationDirectory
+    if ($LASTEXITCODE -ne 0) {
+        throw "Packaged Qt runtime verification failed"
+    }
+
+    $packagedExecutable = Join-Path $applicationDirectory "MKV Muxing Batch GUI.exe"
+    $startupProcess = Start-Process -FilePath $packagedExecutable -PassThru
+    try {
+        $startupDeadline = [DateTime]::UtcNow.AddSeconds(15)
+        $startupVerified = $false
+        while ([DateTime]::UtcNow -lt $startupDeadline) {
+            Start-Sleep -Milliseconds 250
+            $startupProcess.Refresh()
+            if ($startupProcess.HasExited) {
+                throw "Packaged application exited during startup with code $($startupProcess.ExitCode)"
+            }
+            if ($startupProcess.MainWindowTitle -eq "Unhandled exception in script") {
+                throw "Packaged application opened PyInstaller's unhandled-exception dialog"
+            }
+            if (
+                $startupProcess.MainWindowTitle -eq "MKV Muxing Batch GUI v$Version" -and
+                $startupProcess.Responding
+            ) {
+                $startupVerified = $true
+                break
+            }
+        }
+        if (-not $startupVerified) {
+            throw "Packaged application did not open a responsive v$Version window within 15 seconds"
+        }
+        Write-Output "Packaged startup verification passed: MKV Muxing Batch GUI v$Version"
+    }
+    finally {
+        $startupProcess.Refresh()
+        if (-not $startupProcess.HasExited) {
+            Stop-Process -Id $startupProcess.Id -Force
+        }
     }
 
     $innoCompilerCandidates = @(
