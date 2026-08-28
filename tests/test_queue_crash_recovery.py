@@ -3,6 +3,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+from packages import qt_compat as _qt_compat  # noqa: F401
 from collections import defaultdict
 from pathlib import Path
 

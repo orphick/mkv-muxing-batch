@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 import unittest
+
+from packages import qt_compat as _qt_compat  # noqa: F401
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

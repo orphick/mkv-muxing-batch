@@ -1,18 +1,30 @@
 param(
-    [string]$Version = "2.7.2",
-    [string]$Python = ".\.venv\Scripts\python.exe"
+    [string]$Version = "2.7.3",
+    [ValidateSet(5, 6)]
+    [int]$QtMajor = 6,
+    [string]$Python = ""
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-$buildDirectory = Join-Path $projectRoot "build"
-$distDirectory = Join-Path $projectRoot "dist"
-$releaseDirectory = Join-Path $projectRoot "release"
-$specFile = Join-Path $PSScriptRoot "MkvMuxingBatch.spec"
-$installerScript = Join-Path $PSScriptRoot "Installer.iss"
-$applicationDirectory = Join-Path $distDirectory "MKV Muxing Batch GUI"
-$portableFile = Join-Path $releaseDirectory "MKV.Muxing.Batch.GUI.x64.v$Version.Qt6.Windows.Portable.zip"
-$installerFile = Join-Path $releaseDirectory "MKV.Muxing.Batch.GUI.x64.v$Version.Qt6.Windows.Installer.exe"
+if ([string]::IsNullOrWhiteSpace($Python)) {
+    $Python = if ($QtMajor -eq 5) {
+        ".\.venv-qt5\Scripts\python.exe"
+    }
+    else {
+        ".\.venv\Scripts\python.exe"
+    }
+}
+$directorySuffix = if ($QtMajor -eq 5) { "-qt5" } else { "" }
+$applicationName = if ($QtMajor -eq 5) { "MKV Muxing Batch GUI Qt5" } else { "MKV Muxing Batch GUI" }
+$buildDirectory = Join-Path $projectRoot "build$directorySuffix"
+$distDirectory = Join-Path $projectRoot "dist$directorySuffix"
+$releaseDirectory = Join-Path $projectRoot "release$directorySuffix"
+$specFile = Join-Path $PSScriptRoot $(if ($QtMajor -eq 5) { "MkvMuxingBatchQt5.spec" } else { "MkvMuxingBatch.spec" })
+$installerScript = Join-Path $PSScriptRoot $(if ($QtMajor -eq 5) { "InstallerQt5.iss" } else { "Installer.iss" })
+$applicationDirectory = Join-Path $distDirectory $applicationName
+$portableFile = Join-Path $releaseDirectory "MKV.Muxing.Batch.GUI.x64.v$Version.Qt$QtMajor.Windows.Portable.zip"
+$installerFile = Join-Path $releaseDirectory "MKV.Muxing.Batch.GUI.x64.v$Version.Qt$QtMajor.Windows.Installer.exe"
 $checksumsFile = Join-Path $releaseDirectory "SHA256SUMS.txt"
 $runtimeVerifier = Join-Path $PSScriptRoot "verify_packaged_runtime.py"
 $sourceVersion = [regex]::Match(
@@ -47,6 +59,7 @@ try {
     $originalPath = $env:PATH
     $originalPythonPath = $env:PYTHONPATH
     $originalQtPluginPath = $env:QT_PLUGIN_PATH
+    $originalQtApi = $env:MKV_MUXING_BATCH_QT_API
     $cleanPathEntries = @(
         (Split-Path -Parent $pythonExecutable),
         $basePythonDirectory,
@@ -58,6 +71,7 @@ try {
         $env:PATH = $cleanPathEntries -join [System.IO.Path]::PathSeparator
         Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
         Remove-Item Env:QT_PLUGIN_PATH -ErrorAction SilentlyContinue
+        $env:MKV_MUXING_BATCH_QT_API = if ($QtMajor -eq 5) { "pyside2" } else { "pyside6" }
         & $pythonExecutable -m PyInstaller --noconfirm --clean --workpath $buildDirectory --distpath $distDirectory $specFile
         if ($LASTEXITCODE -ne 0) {
             throw "PyInstaller failed with exit code $LASTEXITCODE"
@@ -77,14 +91,20 @@ try {
         else {
             $env:QT_PLUGIN_PATH = $originalQtPluginPath
         }
+        if ($null -eq $originalQtApi) {
+            Remove-Item Env:MKV_MUXING_BATCH_QT_API -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:MKV_MUXING_BATCH_QT_API = $originalQtApi
+        }
     }
 
-    & $pythonExecutable $runtimeVerifier $applicationDirectory
+    & $pythonExecutable $runtimeVerifier $applicationDirectory --qt-major $QtMajor
     if ($LASTEXITCODE -ne 0) {
         throw "Packaged Qt runtime verification failed"
     }
 
-    $packagedExecutable = Join-Path $applicationDirectory "MKV Muxing Batch GUI.exe"
+    $packagedExecutable = Join-Path $applicationDirectory "$applicationName.exe"
     $startupProcess = Start-Process -FilePath $packagedExecutable -PassThru
     try {
         $startupDeadline = [DateTime]::UtcNow.AddSeconds(15)

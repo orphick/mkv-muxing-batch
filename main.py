@@ -4,13 +4,17 @@ import logging
 import signal
 import sys
 from traceback import format_exception
+
 import psutil
+from packages import qt_compat
 from packages.Startup.MainApplication import MainApplication
 from packages.Startup import GlobalFiles
 from packages.Startup import GlobalIcons
-from PySide6.QtGui import QFont, QFontDatabase
-from PySide6.QtWidgets import QApplication
 from packages.Widgets.WarningDialog import WarningDialog
+
+QApplication = qt_compat.QtWidgets.QApplication
+QFont = qt_compat.QtGui.QFont
+QFontDatabase = qt_compat.QtGui.QFontDatabase
 
 if sys.platform == "win32":
     import ctypes

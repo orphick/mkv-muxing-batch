@@ -21,37 +21,53 @@ def find_shadowing_icu_dlls(application_directory: Path) -> list[Path]:
     )
 
 
-def verify(application_directory: Path) -> list[str]:
+def verify(application_directory: Path, qt_major: int = 6) -> list[str]:
     errors: list[str] = []
     internal = application_directory / "_internal"
-    required_qt_files = (
-        internal / "PySide6" / "QtCore.pyd",
-        internal / "PySide6" / "Qt6Core.dll",
-        internal / "PySide6" / "pyside6.abi3.dll",
-        internal / "shiboken6" / "shiboken6.abi3.dll",
-    )
+    if qt_major == 6:
+        required_qt_files = (
+            internal / "PySide6" / "QtCore.pyd",
+            internal / "PySide6" / "Qt6Core.dll",
+            internal / "PySide6" / "pyside6.abi3.dll",
+            internal / "shiboken6" / "shiboken6.abi3.dll",
+        )
+        forbidden_binding = internal / "PySide2"
+    elif qt_major == 5:
+        required_qt_files = (
+            internal / "PySide2" / "QtCore.pyd",
+            internal / "PySide2" / "Qt5Core.dll",
+            internal / "PySide2" / "pyside2.abi3.dll",
+            internal / "shiboken2" / "shiboken2.abi3.dll",
+        )
+        forbidden_binding = internal / "PySide6"
+    else:
+        raise ValueError(f"Unsupported Qt major version: {qt_major}")
     errors.extend(
         f"Required Qt runtime file is missing: {path}"
         for path in required_qt_files
         if not path.is_file()
     )
-    errors.extend(
-        f"Shadowing ICU DLL must not be packaged: {path}"
-        for path in find_shadowing_icu_dlls(application_directory)
-    )
+    if forbidden_binding.exists():
+        errors.append(f"Unexpected Qt binding was packaged: {forbidden_binding}")
+    if qt_major == 6:
+        errors.extend(
+            f"Shadowing ICU DLL must not be packaged: {path}"
+            for path in find_shadowing_icu_dlls(application_directory)
+        )
     return errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("application_directory", type=Path)
+    parser.add_argument("--qt-major", choices=(5, 6), default=6, type=int)
     args = parser.parse_args()
-    errors = verify(args.application_directory.resolve())
+    errors = verify(args.application_directory.resolve(), qt_major=args.qt_major)
     if errors:
         print("Packaged runtime verification failed:")
         print("\n".join(f"- {error}" for error in errors))
         return 1
-    print("Packaged Qt runtime verification passed.")
+    print(f"Packaged Qt {args.qt_major} runtime verification passed.")
     return 0
 
 

@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 
+from packages import qt_compat as _qt_compat  # noqa: F401
 from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import QApplication
 

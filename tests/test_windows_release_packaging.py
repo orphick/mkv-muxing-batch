@@ -12,13 +12,24 @@ SPEC.loader.exec_module(VERIFIER)
 
 
 class PackagedRuntimeVerificationTests(unittest.TestCase):
-    def _create_required_runtime(self, application_directory: Path) -> None:
-        for relative_path in (
-            "_internal/PySide6/QtCore.pyd",
-            "_internal/PySide6/Qt6Core.dll",
-            "_internal/PySide6/pyside6.abi3.dll",
-            "_internal/shiboken6/shiboken6.abi3.dll",
-        ):
+    def _create_required_runtime(
+        self, application_directory: Path, qt_major: int = 6
+    ) -> None:
+        relative_paths = {
+            5: (
+                "_internal/PySide2/QtCore.pyd",
+                "_internal/PySide2/Qt5Core.dll",
+                "_internal/PySide2/pyside2.abi3.dll",
+                "_internal/shiboken2/shiboken2.abi3.dll",
+            ),
+            6: (
+                "_internal/PySide6/QtCore.pyd",
+                "_internal/PySide6/Qt6Core.dll",
+                "_internal/PySide6/pyside6.abi3.dll",
+                "_internal/shiboken6/shiboken6.abi3.dll",
+            ),
+        }
+        for relative_path in relative_paths[qt_major]:
             path = application_directory / relative_path
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
@@ -29,6 +40,15 @@ class PackagedRuntimeVerificationTests(unittest.TestCase):
             self._create_required_runtime(application_directory)
 
             self.assertEqual(VERIFIER.verify(application_directory), [])
+
+    def test_clean_qt5_runtime_passes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            application_directory = Path(directory)
+            self._create_required_runtime(application_directory, qt_major=5)
+
+            self.assertEqual(
+                VERIFIER.verify(application_directory, qt_major=5), []
+            )
 
     def test_top_level_icu_runtime_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:

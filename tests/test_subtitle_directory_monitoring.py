@@ -1,6 +1,8 @@
 import os
 import tempfile
 import unittest
+
+from packages import qt_compat as _qt_compat  # noqa: F401
 from pathlib import Path
 from unittest.mock import Mock
 

@@ -1,14 +1,14 @@
 #ifndef MyAppVersion
   #define MyAppVersion "2.7.3"
 #endif
-#define MyAppName "MKV Muxing Batch GUI"
-#define MyAppExeName "MKV Muxing Batch GUI.exe"
+#define MyAppName "MKV Muxing Batch GUI (Qt5 Compatibility)"
+#define MyAppExeName "MKV Muxing Batch GUI Qt5.exe"
 #define MyAppPublisher "MKV Muxing Batch GUI contributors"
 #define MyAppURL "https://github.com/orphick/mkv-muxing-batch"
 #define BuildRoot "..\.."
 
 [Setup]
-AppId={{D3E51D25-3990-4C69-A747-C63065995F12}
+AppId={{098DFA9B-FF73-49A5-9D14-D984D1C85CA8}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -19,8 +19,8 @@ DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile={#BuildRoot}\LICENSE
-OutputDir={#BuildRoot}\release
-OutputBaseFilename=MKV.Muxing.Batch.GUI.x64.v{#MyAppVersion}.Qt6.Windows.Installer
+OutputDir={#BuildRoot}\release-qt5
+OutputBaseFilename=MKV.Muxing.Batch.GUI.x64.v{#MyAppVersion}.Qt5.Windows.Installer
 SetupIconFile={#BuildRoot}\Resources\Icons\App.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64
@@ -39,7 +39,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"; Flags: unchecked
 
 [Files]
-Source: "{#BuildRoot}\dist\MKV Muxing Batch GUI\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildRoot}\dist-qt5\MKV Muxing Batch GUI Qt5\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

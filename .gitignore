@@ -13,3 +13,7 @@ test.py
 /build/
 /dist/
 /release/
+/.venv-qt5/
+/build-qt5/
+/dist-qt5/
+/release-qt5/
