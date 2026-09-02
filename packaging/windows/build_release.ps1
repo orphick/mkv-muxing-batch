@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "2.7.3",
+    [string]$Version = "2.7.4",
     [ValidateSet(5, 6)]
     [int]$QtMajor = 6,
     [string]$Python = ""
@@ -130,6 +130,29 @@ try {
             throw "Packaged application did not open a responsive v$Version window within 15 seconds"
         }
         Write-Output "Packaged startup verification passed: MKV Muxing Batch GUI v$Version"
+
+        $diagnosticsLog = Join-Path $env:APPDATA "MKV Muxing Batch GUI\diagnostics.log"
+        $expectedQtBinding = if ($QtMajor -eq 5) { "PySide2" } else { "PySide6" }
+        $diagnosticsDeadline = [DateTime]::UtcNow.AddSeconds(5)
+        $diagnosticsVerified = $false
+        while ([DateTime]::UtcNow -lt $diagnosticsDeadline) {
+            Start-Sleep -Milliseconds 250
+            if (Test-Path -LiteralPath $diagnosticsLog) {
+                $diagnosticsText = Get-Content -LiteralPath $diagnosticsLog -Raw
+                if (
+                    $diagnosticsText.Contains("PID=$($startupProcess.Id) frozen=True") -and
+                    $diagnosticsText.Contains("Qt binding=$expectedQtBinding") -and
+                    $diagnosticsText.Contains("GUI watchdog started")
+                ) {
+                    $diagnosticsVerified = $true
+                    break
+                }
+            }
+        }
+        if (-not $diagnosticsVerified) {
+            throw "Packaged application did not initialize its diagnostic logger and GUI watchdog"
+        }
+        Write-Output "Packaged diagnostic logger verification passed: $diagnosticsLog"
     }
     finally {
         $startupProcess.Refresh()

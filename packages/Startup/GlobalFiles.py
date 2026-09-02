@@ -180,7 +180,8 @@ try:
     ThemeIconPath = os.path.join(os.path.abspath(IconFolderPath), 'Day_And_Night.png')
     AppIconPath = os.path.join(os.path.abspath(IconFolderPath), 'App.ico')
     LanguagesFilePath = os.path.join(os.path.abspath(LanguagesFolderPath), "iso639_language_list.json")
-    AppLogFilePath = os.path.join(os.path.abspath(AppDataFolderPath), "app_log.txt")
+    DiagnosticsLogFilePath = os.path.join(os.path.abspath(AppDataFolderPath), "diagnostics.log")
+    AppLogFilePath = DiagnosticsLogFilePath
     MuxingLogFilePath = os.path.join(os.path.abspath(AppDataFolderPath), "muxing_log_file.txt")
     TestMkvmergeFilePath = os.path.join(os.path.abspath(AppDataFolderPath), "test_mkvmerge.txt")
     TestMkvpropeditFilePath = os.path.join(os.path.abspath(AppDataFolderPath), "test_mkvpropedit.txt")

@@ -63,6 +63,15 @@ class PackagedRuntimeVerificationTests(unittest.TestCase):
             self.assertIn("Shadowing ICU DLL", errors[0])
             self.assertIn("icuuc.dll", errors[0])
 
+    def test_release_build_requires_packaged_diagnostics(self):
+        build_script = (
+            PROJECT_ROOT / "packaging" / "windows" / "build_release.ps1"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("PID=$($startupProcess.Id) frozen=True", build_script)
+        self.assertIn("GUI watchdog started", build_script)
+        self.assertIn("diagnostic logger verification passed", build_script)
+
 
 if __name__ == "__main__":
     unittest.main()

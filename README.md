@@ -92,6 +92,16 @@ The packaged release supports **64-bit Windows 10 and Windows 11**.
 
 Choose the installer for a normal Windows installation or the portable ZIP when you want a self-contained copy. Each release includes a `SHA256SUMS.txt` file for integrity verification.
 
+### Reporting a crash or frozen interface
+
+The application writes startup details, Qt messages, mux-job transitions, uncaught exceptions, native crash information, and automatic GUI-hang thread dumps to:
+
+```text
+%APPDATA%\MKV Muxing Batch GUI\diagnostics.log
+```
+
+If the interface freezes, leave it open for at least 15 seconds so the watchdog can record the blocked threads. After closing the application, attach `diagnostics.log` to the issue report. If the file was rotated, also include `diagnostics.log.1`.
+
 ## Supported files
 
 - **Video:** AVI, MKV, MP4, M4V, MOV, MPEG, TS, OGG, OGM, H264, H265, WEBM, WMV

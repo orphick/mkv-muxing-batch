@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
-# import faulthandler
-import logging
 import signal
 import sys
-from traceback import format_exception
 
 import psutil
+
 from packages import qt_compat
+from packages.diagnostics import setup_diagnostics
+# MainApplication constructs QApplication during import. It must precede
+# GlobalIcons, because Qt5 aborts if QIcon objects are created without qApp.
 from packages.Startup.MainApplication import MainApplication
-from packages.Startup import GlobalFiles
-from packages.Startup import GlobalIcons
+from packages.Startup import GlobalFiles, GlobalIcons
+from packages.Startup.Version import Version
 from packages.Widgets.WarningDialog import WarningDialog
 
 QApplication = qt_compat.QtWidgets.QApplication
@@ -22,11 +22,13 @@ if sys.platform == "win32":
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
     from packages.MainWindow import MainWindow
 else:
-    from packages.MainWindowNonWindowsSystem import MainWindowNonWindowsSystem as MainWindow
+    from packages.MainWindowNonWindowsSystem import (
+        MainWindowNonWindowsSystem as MainWindow,
+    )
 
-# faulthandler.enable()
 window: MainWindow
 app: QApplication
+diagnostics = None
 
 
 def setup_application_font():
@@ -35,10 +37,12 @@ def setup_application_font():
         font_name = QFontDatabase.applicationFontFamilies(font_id)[0]
         font = QFont(font_name, 10)
         app.setFont(font)
-    except Exception as e:
-        warning_dialog = WarningDialog(window_title="Missing Fonts", info_message="Can't find 'OpenSans' font at "
-                                                                                  "../Resources/Fonts/OpenSans.ttf\n" +
-                                                                                  "application will use default font")
+    except Exception:
+        warning_dialog = WarningDialog(
+            window_title="Missing Fonts",
+            info_message="Can't find 'OpenSans' font at "
+            "../Resources/Fonts/OpenSans.ttf\n" + "application will use default font",
+        )
         warning_dialog.execute()
 
 
@@ -54,8 +58,12 @@ def create_window():
 
 
 def run_application():
-    app_execute = app.exec()
-    kill_all_children()
+    try:
+        app_execute = app.exec()
+    finally:
+        kill_all_children()
+        if diagnostics is not None:
+            diagnostics.stop()
     sys.exit(app_execute)
 
 
@@ -66,23 +74,15 @@ def kill_all_children():
         child.send_signal(signal.SIGTERM)
 
 
-def logger_exception(exception_type, exception_value, exception_trace_back):
-    for string in format_exception(exception_type, exception_value, exception_trace_back):
-        logging.error(string)
-
-
 def setup_logger():
-    logging.basicConfig(
-        format='(%(asctime)s): %(name)s [%(levelname)s]: %(message)s',
-        datefmt='%m/%d/%Y %I:%M:%S %p',
-        level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler(filename=GlobalFiles.AppLogFilePath,
-                                encoding='utf-8', mode='a+'),
-            logging.StreamHandler()
-        ]
+    global diagnostics
+    diagnostics = setup_diagnostics(
+        log_path=GlobalFiles.DiagnosticsLogFilePath,
+        version=Version,
+        qt_core=qt_compat.QtCore,
+        qt_binding_name=qt_compat.QT_BINDING_NAME,
+        qt_major_version=qt_compat.QT_MAJOR_VERSION,
     )
-    sys.excepthook = logger_exception
 
 
 if __name__ == "__main__":
@@ -90,4 +90,5 @@ if __name__ == "__main__":
     create_application()
     setup_application_font()
     create_window()
+    diagnostics.start_gui_watchdog()
     run_application()
