@@ -59,3 +59,10 @@ else:
         QtBinding, QtCore, QtGui, QtWidgets, QT_MAJOR_VERSION = _load_pyside2()
 
 QT_BINDING_NAME = QtBinding.__name__
+
+
+def qt_enum_value(member):
+    """Return the numeric value of a Qt enum under either PySide2 or PySide6."""
+    if hasattr(member, "value"):
+        return member.value
+    return int(member)

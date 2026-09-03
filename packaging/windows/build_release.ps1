@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "2.7.4",
+    [string]$Version = "2.7.5",
     [ValidateSet(5, 6)]
     [int]$QtMajor = 6,
     [string]$Python = ""
