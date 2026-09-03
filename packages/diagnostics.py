@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 from traceback import format_exception
 
+from packages.Startup.Version import ProvenanceID
+
 LOG_MAX_BYTES = 5 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
 GUI_HEARTBEAT_INTERVAL_MS = 1_000
@@ -244,6 +246,7 @@ class DiagnosticsRuntime:
         qversion = getattr(self.qt_core, "qVersion", lambda: "unknown")()
         logger.info("=" * 72)
         logger.info("MKV Muxing Batch GUI v%s diagnostic session", self.version)
+        logger.info("Project provenance=%s", ProvenanceID)
         logger.info(
             "PID=%s frozen=%s executable=%s",
             os.getpid(),

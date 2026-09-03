@@ -16,6 +16,13 @@ def collect_files(source, destination):
 
 
 datas = []
+datas.extend(
+    [
+        (str(project_root / "LICENSE"), "."),
+        (str(project_root / "COPYRIGHT.md"), "."),
+        (str(project_root / "CHANGELOG.md"), "."),
+    ]
+)
 for directory_name in ("DLL", "Fonts", "Icons", "Languages"):
     datas.extend(collect_files(resources_root / directory_name, f"Resources/{directory_name}"))
 datas.extend(

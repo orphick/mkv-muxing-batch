@@ -23,6 +23,11 @@ class AboutDialog(MyDialog):
         self.app_icon_label.setPixmap(QPixmap(AppIconPath).scaledToHeight(175))
         self.app_name_label = QLabel("MKV Muxing Batch GUI")
         self.app_current_version = QLabel("Version: " + str(Version))
+        self.app_maintainer_label = QLabel(
+            '2026 maintenance: <a href="https://github.com/orphick">'
+            'Mohammadreza Mahdavi (@orphick)</a>'
+        )
+        self.app_maintainer_label.setOpenExternalLinks(True)
         self.app_mkvmerge_current_version = QLabel(str(MKVMERGE_VERSION))
         self.app_mkvpropedit_current_version = QLabel(str(MKVPROPEDIT_VERSION))
         self.app_link_github_label = QLabel("Check for updates on: " + GitHubRepoUrlTag)
@@ -60,6 +65,7 @@ class AboutDialog(MyDialog):
         self.main_layout.addWidget(self.app_icon_label, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.app_name_label, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.app_current_version, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.addWidget(self.app_maintainer_label, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.app_mkvmerge_current_version, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.app_mkvpropedit_current_version, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.app_link_github_label, alignment=Qt.AlignmentFlag.AlignCenter)

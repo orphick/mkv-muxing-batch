@@ -14,7 +14,7 @@ A focused desktop workspace for muxing entire video collections with precise tra
 [![Python](https://img.shields.io/badge/Python-3.14-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/orphick/mkv-muxing-batch?style=flat-square&color=3ca374)](LICENSE)
 
-[Download](#download) · [See what it can do](#what-it-does) · [Run from source](#run-from-source) · [Report a problem](https://github.com/orphick/mkv-muxing-batch/issues)
+[Download](#download) · [Changelog](CHANGELOG.md) · [Copyright](COPYRIGHT.md) · [See what it can do](#what-it-does) · [Run from source](#run-from-source) · [Report a problem](https://github.com/orphick/mkv-muxing-batch/issues)
 
 </div>
 
@@ -184,6 +184,13 @@ On Linux, clear the bundled tool directory only when you intentionally want the 
 
 MKV Muxing Batch began as a fork of [yaser01/mkv-muxing-batch-gui](https://github.com/yaser01/mkv-muxing-batch-gui). The foundation, early interface, and breadth of muxing controls came from that project and its contributors.
 
+The substantial 2026 maintenance effort—including the interface redesign,
+queue recovery, metadata templates, subtitle-safety work, diagnostic system,
+automated tests, and Windows release pipeline—was developed by
+[Mohammadreza Mahdavi (`@orphick`)](https://github.com/orphick). The canonical
+repository for that work is
+[`orphick/mkv-muxing-batch`](https://github.com/orphick/mkv-muxing-batch).
+
 The application relies on [MKVToolNix](https://gitlab.com/mbunkus/mkvtoolnix), whose work makes dependable Matroska tooling possible.
 
 Thank you to everyone who reports a broken edge case, tests a large queue, or suggests a way to make repetitive media work less repetitive.
@@ -191,6 +198,8 @@ Thank you to everyone who reports a broken edge case, tests a large queue, or su
 ## License
 
 This project is distributed under the [GNU General Public License v2.0](LICENSE).
+Copyright ownership and project provenance are documented in
+[`COPYRIGHT.md`](COPYRIGHT.md).
 
 ---
 
